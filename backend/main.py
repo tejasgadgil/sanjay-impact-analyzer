@@ -45,16 +45,13 @@ async def startup_event():
     
     sample_projects_path = config.SAMPLE_PROJECTS_PATH
     
-    for repo in os.listdir(sample_projects_path):
-        repo_path = os.path.join(sample_projects_path, repo)
-        if os.path.isdir(repo_path):
-            try:
-                graph.build_graph(repo_path, repo)
-                logger.info(f"✓ Loaded {repo}")
-            except Exception as e:
-                logger.error(f"Failed to load {repo}: {e}")
-    
-    logger.info("Startup complete")
+    try:
+        graph.build_graph(sample_projects_path, '')  # Empty string for repository_name disables prefix
+        logger.info("✓ Loaded all sample projects")
+    except Exception as e:
+        logger.error(f"Failed to load sample projects: {e}")
+        
+        logger.info("Startup complete")
 
 # API
 

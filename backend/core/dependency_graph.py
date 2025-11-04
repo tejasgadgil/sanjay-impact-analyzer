@@ -60,56 +60,65 @@ class DependencyGraph:
         
         return imports
     
-    def build_graph(self, directory: str, repository_name: str = "repo") -> Dict:
+    def build_graph(self, directory: str, repository_name: str = "") -> Dict:
         """
         Scan directory and build dependency graph.
-        
+
         Args:
             directory: Root directory to scan
-            repository_name: Name of the repository (for tracking)
-            
+            repository_name: Name of the repository (for prefixing module names); if empty, no prefix
+
         Returns:
             Dictionary with graph info
         """
+
         logger.info(f"Building dependency graph for {directory}")
-        
+
         # Step 1: Find all Python files
         python_files = {}
+
         for root, _, filenames in os.walk(directory):
             for filename in filenames:
-                if filename.endswith('.py') and not filename.startswith('_'):
+                # Include .py files including __init__.py but exclude __pycache__ and other dunder folders
+                if filename.endswith('.py') and (filename == '__init__.py' or not filename.startswith('__')):
                     filepath = os.path.join(root, filename)
-                    
+
                     # Convert file path to module name
-                    # e.g., ./repo_a/module_a.py -> module_a
                     rel_path = os.path.relpath(filepath, directory)
                     module_name = rel_path.replace('/', '.').replace('\\', '.').replace('.py', '')
-                    
+
+                    # Prefix module names with repo name if provided
+                    if repository_name:
+                        module_name = repository_name + '.' + module_name
+
                     python_files[module_name] = filepath
                     self.files_to_modules[filepath] = module_name
                     self.module_to_files[module_name] = filepath
-        
-        logger.info(f"Found {len(python_files)} Python files")
-        
+
+        logger.info(f"Found {len(python_files)} Python files: {list(python_files.keys())}")
+
         # Step 2: Build dependency graph
         for module_name, filepath in python_files.items():
             imports = self.parse_python_file(filepath)
-            
+            logger.info(f"Module '{module_name}' imports: {imports}")
+
             for imp in imports:
-                # Check if import is internal (in our codebase)
+                matched = False
                 for other_module in python_files.keys():
-                    # Simplified: check if import matches module name
-                    if imp == other_module or other_module.startswith(imp + '.'):
-                        # module_name depends on other_module
+                    if imp == other_module or imp.startswith(other_module + '.'):
                         self.graph[other_module].add(module_name)
-        
+                        logger.info(f"Added edge: '{module_name}' depends on '{other_module}'")
+                        matched = True
+                if not matched:
+                    logger.info(f"No matching module found for import '{imp}' in module '{module_name}'")
+
         logger.info(f"Graph built with {len(self.graph)} nodes")
         return {
             "nodes": len(python_files),
             "edges": sum(len(v) for v in self.graph.values()),
             "modules": list(python_files.keys())
         }
-    
+
     def find_affected_modules(self, changed_module: str, max_depth: int = 5) -> List[str]:
         """
         Find all modules affected by changes to changed_module using BFS.
@@ -158,3 +167,14 @@ class DependencyGraph:
                 for dependent in dependents
             ]
         }
+    
+    def print_summary(self):
+        print(f"Total modules (nodes): {len(self.module_to_files)}")
+        print("Modules:")
+        for mod in sorted(self.module_to_files.keys()):
+            print(f" - {mod}")
+        print("Dependencies (edges):")
+        for src, targets in self.graph.items():
+            for tgt in targets:
+                print(f" - {src} -> {tgt}")
+

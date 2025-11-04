@@ -34,23 +34,33 @@ class GeminiAnalyzer:
         Returns:
             Dictionary with LLM analysis
         """
-        
+
+        # Check if Gemini is available
         if not self.available or not config.GEMINI_API_KEY:
-            logger.warning("Gemini not available, returning basic analysis")
-            return self._fallback_analysis(changed_modules, affected_modules)
+            raise RuntimeError("Gemini API key missing or Gemini not available")
+
+        prompt = self._build_prompt(changed_modules, affected_modules)
+        response = self.model.generate_content(prompt)
+        analysis = self._parse_response(response.text)
+        return analysis
+
         
-        try:
-            prompt = self._build_prompt(changed_modules, affected_modules)
-            response = self.model.generate_content(prompt)
+        # if not self.available or not config.GEMINI_API_KEY:
+        #     logger.warning("Gemini not available, returning basic analysis")
+        #     return self._fallback_analysis(changed_modules, affected_modules)
+        
+        # try:
+        #     prompt = self._build_prompt(changed_modules, affected_modules)
+        #     response = self.model.generate_content(prompt)
             
-            # Parse response
-            analysis = self._parse_response(response.text)
-            logger.info("Gemini analysis completed successfully")
-            return analysis
+        #     # Parse response
+        #     analysis = self._parse_response(response.text)
+        #     logger.info("Gemini analysis completed successfully")
+        #     return analysis
         
-        except Exception as e:
-            logger.error(f"Gemini analysis failed: {e}")
-            return self._fallback_analysis(changed_modules, affected_modules)
+        # except Exception as e:
+        #     logger.error(f"Gemini analysis failed: {e}")
+        #     return self._fallback_analysis(changed_modules, affected_modules)
     
     def _build_prompt(self, changed_modules: List[str], affected_modules: List[str]) -> str:
         """Build the prompt for Gemini"""

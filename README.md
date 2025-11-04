@@ -1,4 +1,3 @@
-```markdown
 # Code Impact Analysis Tool - Iteration 1
 
 A lightweight tool to analyze the impact of code changes across modular systems.
@@ -22,23 +21,23 @@ A lightweight tool to analyze the impact of code changes across modular systems.
 
 ### 1. Clone and Setup
 ```
-
 git clone <your-repo>
 cd impact-analyzer
+```
 
 # Create virtual environment
-
+```
 python3 -m venv venv
 source venv/bin/activate # On Windows: venv\Scripts\activate
+```
 
 # Install dependencies
-
+```
 pip install -r requirements.txt
-
+```
 # Copy environment file
-
+```
 cp .env.example .env
-
 ```
 
 ### 2. Configure Gemini API (Optional)

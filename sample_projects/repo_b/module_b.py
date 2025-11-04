@@ -1,16 +1,10 @@
-"""
-Sample Module B
-Depends on Module A for user processing
-"""
-# In real code: from repo_a.module_a import get_user_data
-# For simplicity in our test: importing from module_a
+from repo_a.module_a import get_user_data
 
 def validate_user(user_id: int):
-    """Validate user exists and is active"""
-    # Would call: data = get_user_data(user_id)
-    return True
+    data = get_user_data(user_id)
+    return data.get("id") == user_id
 
 def send_notification(user_id: int):
-    """Send notification to user"""
-    # validate_user(user_id)
-    return f"Notification sent to user {user_id}"
+    if validate_user(user_id):
+        return f"Notification sent to user {user_id}"
+    return "Invalid user"

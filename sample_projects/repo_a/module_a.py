@@ -1,8 +1,3 @@
-"""
-Sample Module A
-Provides core functionality for user data processing
-"""
-
 def get_user_data(user_id: int):
     """Fetch user data from database"""
     return {

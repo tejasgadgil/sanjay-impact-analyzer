@@ -1,16 +1,11 @@
-"""
-Sample Module C
-Transforms user data for API responses
-"""
+from repo_a.module_a import process_user
 
 def transform_user_data(user_id: int):
-    """Transform user data to API format"""
-    # Would import: from repo_a.module_a import process_user
+    processed = process_user(user_id)
     return {
         "user_id": user_id,
-        "data": {}
+        "data": processed
     }
 
 def cache_user_data(user_id: int):
-    """Cache transformed data"""
     return transform_user_data(user_id)

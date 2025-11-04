@@ -56,43 +56,34 @@ async def startup_event():
     
     logger.info("Startup complete")
 
-# API Endpoints
+# API
 
 @app.post("/api/analyze-diff")
 async def analyze_diff(file: UploadFile = File(...)):
-    """
-    Analyze a diff file to find impacted modules.
-    
-    - **file**: Git diff file (.diff or .patch)
-    """
-    logger.info(f"Received diff file: {file.filename}")
-    
+    content = await file.read()
+    diff_text = content.decode('utf-8')
+
+    # Perform static analysis
+    result = impact_analyzer.analyze_diff(diff_text)
+    if result["status"] != "success":
+        return result
+
+    # Always call Gemini without fallback
     try:
-        content = await file.read()
-        diff_text = content.decode('utf-8')
-        
-        # Analyze the diff
-        result = impact_analyzer.analyze_diff(diff_text)
-        
-        if result["status"] != "success":
-            return result
-        
-        # Get LLM analysis
         llm_analysis = llm_analyzer.analyze_impact(
             result["changed_modules"],
             result["affected_modules"]
         )
-        
-        result["llm_analysis"] = llm_analysis
-        
-        return result
-    
     except Exception as e:
-        logger.error(f"Error analyzing diff: {e}")
+        # Instead of fallback, you can raise or return error here
         return {
             "status": "error",
-            "message": str(e)
+            "message": f"Gemini LLM call failed: {str(e)}"
         }
+
+    result["llm_analysis"] = llm_analysis
+    return result
+
 
 @app.post("/api/analyze-diff-text")
 async def analyze_diff_text(request: dict):

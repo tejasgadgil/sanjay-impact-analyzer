@@ -20,22 +20,28 @@ A lightweight tool to analyze the impact of code changes across modular systems.
 ## Quick Start
 
 ### 1. Clone and Setup
+
 ```
 git clone <your-repo>
 cd impact-analyzer
 ```
 
 # Create virtual environment
+
 ```
 python3 -m venv venv
-source venv/bin/activate # On Windows: venv\Scripts\activate
+# On Mac: source venv/bin/activate
+venv\Scripts\activate
 ```
 
 # Install dependencies
+
 ```
 pip install -r requirements.txt
 ```
+
 # Copy environment file
+
 ```
 cp .env.example .env
 ```
@@ -43,6 +49,7 @@ cp .env.example .env
 ### 2. Configure Gemini API (Optional)
 
 To enable LLM analysis:
+
 - Get API key from [Google AI Studio](https://aistudio.google.com/)
 - Add to `.env`:
 
@@ -137,9 +144,11 @@ impact-analyzer/
 ## API Endpoints
 
 ### POST `/api/analyze-diff`
+
 Upload a `.diff` file for analysis
 **Request:** Multipart form with `file` field
 **Response:**
+
 ```
 
 {
@@ -160,9 +169,11 @@ Upload a `.diff` file for analysis
 ```
 
 ### GET `/api/health`
+
 Health check endpoint
 
 ### GET `/api/graph-stats`
+
 Get statistics about loaded dependency graphs
 
 ---
@@ -180,6 +191,7 @@ Get statistics about loaded dependency graphs
 ## Troubleshooting
 
 **Port 8000 already in use**
+
 ```
 
 python -m uvicorn backend.main:app --port 8001
@@ -187,10 +199,12 @@ python -m uvicorn backend.main:app --port 8001
 ```
 
 **Gemini API not working**
+
 - Check `.env` has valid API key
 - Tool still works without Gemini (uses fallback analysis)
 
 **Python version issues**
+
 - Requires Python 3.8+
 - Use `python3` instead of `python` on Mac/Linux
 
@@ -199,6 +213,7 @@ python -m uvicorn backend.main:app --port 8001
 ## Contributing
 
 This is a hackathon project. For Iteration 2+, consider:
+
 - Multi-language support (Java, TypeScript)
 - Database for caching analyses
 - GitHub webhook integration
@@ -207,4 +222,7 @@ This is a hackathon project. For Iteration 2+, consider:
 ## License
 
 MIT
+
+```
+
 ```

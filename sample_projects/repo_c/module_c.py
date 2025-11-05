@@ -1,11 +1,4 @@
-from repo_a.module_a import process_user
+from repo_d.module_d import dummy_d
 
-def transform_user_data(user_id: int):
-    processed = process_user(user_id)
-    return {
-        "user_id": user_id,
-        "data": processed
-    }
-
-def cache_user_data(user_id: int):
-    return transform_user_data(user_id)
+def dummy_c():
+    print("Module C")

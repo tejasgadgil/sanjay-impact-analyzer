@@ -180,11 +180,6 @@ async def graph_stats():
         "modules": list(graph.module_to_files.keys())
     }
 
-# @app.get("/", response_class=HTMLResponse)
-# async def index():
-#     """Serve HTML UI"""
-#     return get_html_ui()
-
 @app.get("/", response_class=HTMLResponse)
 async def index():
     """Serve HTML UI"""

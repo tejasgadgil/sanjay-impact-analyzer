@@ -574,7 +574,7 @@
                     .attr('id', 'arrowhead')
                     .attr('markerWidth', 10)
                     .attr('markerHeight', 10)
-                    .attr('refX', 24)
+                    .attr('refX', 36)
                     .attr('refY', 5)
                     .attr('orient', 'auto')
                     .append('polygon')
@@ -638,15 +638,17 @@
                     });
                 
                 // Draw nodes as rectangles (squares)
-                const nodeSize = 50;
-                
+                const labelPaddingX = 20, labelPaddingY = 12;
+                const labels = data.nodes.map(d => d.id.split('.').pop());
+                const labelWidths = labels.map(txt => Math.max(60, txt.length * 8)); // Approximate width
+
                 const node = g.selectAll('rect')
                     .data(data.nodes)
                     .enter().append('rect')
-                    .attr('x', d => d.x - nodeSize / 2)
-                    .attr('y', d => d.y - nodeSize / 2)
-                    .attr('width', nodeSize)
-                    .attr('height', nodeSize)
+                    .attr('x', (d, i) => d.x - labelWidths[i] / 2)
+                    .attr('y', d => d.y - 18)
+                    .attr('width', (d, i) => labelWidths[i])
+                    .attr('height', 36)
                     .attr('rx', 4)
                     .attr('fill', d => {
                         if (d.type === 'changed') return '#ff6b6b';
@@ -667,16 +669,14 @@
                     .enter().append('text')
                     .attr('x', d => d.x)
                     .attr('y', d => d.y)
-                    .text(d => {
-                        const parts = d.id.split('.');
-                        return parts[parts.length - 1];
-                    })
-                    .attr('font-size', 12)
+                    .text((d) => d.id.split('.').pop())
+                    .attr('font-size', 16)
                     .attr('font-weight', 'bold')
                     .attr('text-anchor', 'middle')
                     .attr('dy', '0.3em')
-                    .attr('fill', 'white')
-                    .attr('pointer-events', 'none');
+                    .attr('pointer-events', 'none')
+                    .attr('fill', 'white');
+
             }
             
             function showTooltip(event, text) {

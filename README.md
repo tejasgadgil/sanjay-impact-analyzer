@@ -1,14 +1,6 @@
-# Code Impact Analysis Tool - Iteration 1
+# Code Impact Analysis Tool
 
 A lightweight tool to analyze the impact of code changes across modular systems.
-
-## Features (Iteration 1)
-
-- ✅ Parse Python dependency graphs
-- ✅ Analyze git diffs
-- ✅ Identify affected modules
-- ✅ LLM-powered impact reasoning (Gemini 2.5 Flash)
-- ✅ Beautiful web UI with graph visualization
 
 ## Tech Stack
 

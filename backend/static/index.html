@@ -1,0 +1,709 @@
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Code Impact Analysis Tool</title>
+        <script src="https://d3js.org/d3.v7.min.js"></script>
+        <style> * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;            }
+            
+            .container {
+                max-width: 1400px;
+                margin: 0 auto;
+                background: white;
+                border-radius: 12px;
+                box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+                overflow: hidden;
+            }
+            
+            header {
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                color: white;
+                padding: 40px 20px;
+                text-align: center;
+            }
+            
+            header h1 {
+                font-size: 2.5em;
+                margin-bottom: 10px;
+            }
+            
+            header p {
+                font-size: 1.1em;
+                opacity: 0.9;
+            }
+            
+            .content {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 30px;
+                padding: 40px;
+            }
+            
+            .section {
+                display: flex;
+                flex-direction: column;
+            }
+            
+            .section h2 {
+                color: #333;
+                margin-bottom: 20px;
+                font-size: 1.5em;
+                border-bottom: 3px solid #667eea;
+                padding-bottom: 10px;
+            }
+            
+            .upload-area {
+                border: 3px dashed #667eea;
+                border-radius: 8px;
+                padding: 40px;
+                text-align: center;
+                cursor: pointer;
+                transition: all 0.3s ease;
+                background: #f8f9ff;
+            }
+            
+            .upload-area:hover {
+                background: #f0f2ff;
+                border-color: #764ba2;
+            }
+            
+            .upload-area input[type="file"] {
+                display: none;
+            }
+            
+            .upload-icon {
+                font-size: 3em;
+                margin-bottom: 10px;
+            }
+            
+            .upload-text {
+                color: #666;
+                margin-bottom: 10px;
+            }
+            
+            button {
+                padding: 12px 20px;
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                color: white;
+                border: none;
+                border-radius: 8px;
+                cursor: pointer;
+                font-size: 1em;
+                font-weight: 600;
+                transition: transform 0.2s ease, box-shadow 0.2s ease;
+                margin-top: 15px;
+            }
+            
+            button:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+            }
+            
+            .results {
+                margin-top: 40px;
+                padding: 30px;
+                background: #f8f9ff;
+                border-radius: 8px;
+                display: none;
+            }
+            
+            .results.active {
+                display: block;
+            }
+            
+            .results h3 {
+                color: #333;
+                margin-bottom: 20px;
+                font-size: 1.3em;
+            }
+            
+            .summary {
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+                gap: 15px;
+                margin-bottom: 30px;
+            }
+            
+            .stat-box {
+                background: white;
+                padding: 20px;
+                border-radius: 8px;
+                border-left: 4px solid #667eea;
+                box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            }
+            
+            .stat-label {
+                color: #999;
+                font-size: 0.9em;
+                margin-bottom: 5px;
+            }
+            
+            .stat-value {
+                color: #333;
+                font-size: 1.8em;
+                font-weight: bold;
+            }
+            
+            .module-cards {
+                display: grid;
+                gap: 15px;
+                margin-top: 20px;
+            }
+            
+            .module-card {
+                background: white;
+                padding: 20px;
+                border-radius: 8px;
+                border-left: 4px solid #667eea;
+                box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            }
+            
+            .module-card.risk-high {
+                border-left-color: #ff6b6b;
+            }
+            
+            .module-card.risk-medium {
+                border-left-color: #ffc93c;
+            }
+            
+            .module-card.risk-low {
+                border-left-color: #26de81;
+            }
+            
+            .module-name {
+                font-weight: 600;
+                font-size: 1.1em;
+                margin-bottom: 10px;
+                display: flex;
+                align-items: center;
+                gap: 10px;
+            }
+            
+            .risk-badge {
+                display: inline-block;
+                padding: 4px 12px;
+                border-radius: 20px;
+                font-size: 0.85em;
+                font-weight: 600;
+            }
+            
+            .risk-high .risk-badge {
+                background: #ff6b6b;
+                color: white;
+            }
+            
+            .risk-medium .risk-badge {
+                background: #ffc93c;
+                color: white;
+            }
+            
+            .risk-low .risk-badge {
+                background: #26de81;
+                color: white;
+            }
+            
+            .module-reason {
+                color: #666;
+                font-size: 0.95em;
+                margin-bottom: 8px;
+                line-height: 1.4;
+            }
+            
+            .module-issue {
+                color: #999;
+                font-size: 0.9em;
+                font-style: italic;
+                padding-top: 8px;
+                border-top: 1px solid #eee;
+            }
+            
+            .graph-container {
+                padding: 40px;
+                border-top: 1px solid #eee;
+            }
+            
+            .graph-container h2 {
+                margin-bottom: 20px;
+                color: #333;
+                font-size: 1.5em;
+                border-bottom: 3px solid #667eea;
+                padding-bottom: 10px;
+            }
+            
+            .graph-wrapper {
+                position: relative;
+                border: 1px solid #ddd;
+                border-radius: 8px;
+                background: white;
+                overflow: hidden;
+            }
+            
+            svg {
+                display: block;
+                width: 100%;
+            }
+            
+            .graph-background {
+                fill: white;
+            }
+            
+            .grid-pattern {
+                fill: none;
+                stroke: #f0f0f0;
+                stroke-width: 1;
+            }
+            
+            .tooltip {
+                position: absolute;
+                padding: 8px 12px;
+                background: rgba(0, 0, 0, 0.8);
+                color: white;
+                border-radius: 4px;
+                font-size: 12px;
+                pointer-events: none;
+                z-index: 1000;
+                display: none;
+                max-width: 250px;
+                word-wrap: break-word;
+            }
+            
+            .tooltip.active {
+                display: block;
+            }
+            
+            .loading {
+                display: none;
+                text-align: center;
+                padding: 20px;
+            }
+            
+            .loading.active {
+                display: block;
+            }
+            
+            .spinner {
+                border: 4px solid #f3f3f3;
+                border-top: 4px solid #667eea;
+                border-radius: 50%;
+                width: 40px;
+                height: 40px;
+                animation: spin 1s linear infinite;
+                margin: 0 auto;
+            }
+            
+            @keyframes spin {
+                0% { transform: rotate(0deg); }
+                100% { transform: rotate(360deg); }
+            }
+            
+            .error {
+                background: #ffe0e0;
+                color: #c92a2a;
+                padding: 15px;
+                border-radius: 8px;
+                margin: 20px 0;
+                display: none;
+            }
+            
+            .error.active {
+                display: block;
+            }
+            
+            .graph-legend {
+                margin-top: 20px;
+                padding: 15px;
+                background: #f8f9ff;
+                border-radius: 8px;
+                font-size: 0.9em;
+            }
+            
+            .legend-item {
+                display: inline-flex;
+                align-items: center;
+                gap: 8px;
+                margin-right: 20px;
+                margin-bottom: 10px;
+            }
+            
+            .legend-shape {
+                width: 20px;
+                height: 20px;
+            }
+            
+            .pan-info {
+                font-size: 0.85em;
+                color: #666;
+                margin-top: 10px;
+                padding: 10px;
+                background: #f8f9ff;
+                border-radius: 4px;
+            }
+            
+            @media (max-width: 768px) {
+                .content {
+                    grid-template-columns: 1fr;
+                }
+                
+                header h1 {
+                    font-size: 1.8em;
+                }
+            }
+        </style>
+
+        </head>
+        <body>
+            <div class="container">
+                <header>
+                    <h1>🔍 Code Impact Analysis</h1>
+                    <p>Analyze impact of code changes across your modules</p>
+                </header>
+
+                <div class="content">
+                    <!-- Left column: Upload -->
+                    <div class="section">
+                        <h2>Upload Diff</h2>
+                    <div class="upload-area" onclick="document.getElementById('fileInput').click()">
+                        <div class="upload-icon">📁</div>
+                        <div class="upload-text">Click to upload or drag & drop</div>
+                        <div style="color: #999; font-size: 0.9em;">.diff or .patch files</div>
+                    </div>
+                    <input type="file" id="fileInput" accept=".diff,.patch" />
+                    <button onclick="uploadFile()">Analyze File</button>
+                </div>
+                
+                <!-- Right column: Results -->
+                <div class="section">
+                    <h2>Analysis Results</h2>
+                    
+                    <div class="loading" id="loading">
+                        <div class="spinner"></div>
+                        <p style="margin-top: 15px; color: #666;">Analyzing...</p>
+                    </div>
+                    
+                    <div class="error" id="error"></div>
+                    
+                    <div class="results" id="results">
+                        <div class="summary" id="summary"></div>
+                        <div class="module-cards" id="moduleCards"></div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Graph visualization (full width) -->
+            <div class="graph-container">
+                <h2>Dependency Graph</h2>
+                <div class="graph-wrapper">
+                    <svg id="graph" height="500"></svg>
+                </div>
+                <div class="pan-info">
+                    💡 Tip: Use mouse scroll to zoom, click and drag on the background to pan. Nodes stay in place.
+                </div>
+                <div class="graph-legend">
+                    <div class="legend-item">
+                        <div class="legend-shape" style="background: #667eea;"></div>
+                        <span>Module</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-shape" style="background: #ff6b6b;"></div>
+                        <span>Changed Module</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-shape" style="background: #ffc93c;"></div>
+                        <span>Affected Module</span>
+                    </div>
+                    <div class="legend-item">
+                        <div style="width: 20px; height: 2px; background: #333;"></div>
+                        <span>Dependency</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="tooltip" id="tooltip"></div>
+        
+        <script>
+            let currentGraphData = null;
+            
+            // Load graph on page load
+            document.addEventListener('DOMContentLoaded', loadInitialGraph);
+            
+            async function loadInitialGraph() {
+                try {
+                    const response = await fetch('/api/graph');
+                    const data = await response.json();
+                    
+                    if (data.status === 'success') {
+                        currentGraphData = data;
+                        drawGraph(data);
+                    }
+                } catch (err) {
+                    console.error('Error loading graph:', err);
+                }
+            }
+            
+            function uploadFile() {
+                const fileInput = document.getElementById('fileInput');
+                const file = fileInput.files;
+                
+                if (!file) {
+                    showError('Please select a file');
+                    return;
+                }
+                
+                const formData = new FormData();
+                formData.append('file', file);
+                
+                showLoading(true);
+                clearError();
+                
+                fetch('/api/analyze-diff', {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(r => r.json())
+                .then(data => {
+                    showLoading(false);
+                    if (data.status === 'success') {
+                        displayResults(data);
+                    } else {
+                        showError(data.message || 'Analysis failed');
+                    }
+                })
+                .catch(err => {
+                    showLoading(false);
+                    showError('Error: ' + err);
+                });
+            }
+            
+            function displayResults(data) {
+                // Summary
+                const summary = document.getElementById('summary');
+                summary.innerHTML = `
+                    <div class="stat-box">
+                        <div class="stat-label">Changed Files</div>
+                        <div class="stat-value">${data.changed_files.length}</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-label">Changed Modules</div>
+                        <div class="stat-value">${data.changed_modules.length}</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-label">Affected Modules</div>
+                        <div class="stat-value">${data.total_affected}</div>
+                    </div>
+                `;
+                
+                // Module cards
+                const moduleCards = document.getElementById('moduleCards');
+                moduleCards.innerHTML = '';
+                
+                data.affected_modules.forEach(module => {
+                    const analysis = data.llm_analysis[module] || {};
+                    const risk = analysis.risk || 'MEDIUM';
+                    const reason = analysis.reason || 'Dependency on changed code';
+                    const issue = analysis.potential_issue || '';
+                    
+                    const card = document.createElement('div');
+                    card.className = `module-card risk-${risk.toLowerCase()}`;
+                    card.innerHTML = `
+                        <div class="module-name">
+                            ${module}
+                            <span class="risk-badge">${risk}</span>
+                        </div>
+                        <div class="module-reason">${reason}</div>
+                        ${issue ? '<div class="module-issue">⚠️ ' + issue + '</div>' : ''}
+                    `;
+                    moduleCards.appendChild(card);
+                });
+                
+                // Update graph with analysis results
+                drawGraph(data.graph_data);
+                
+                // Show results
+                document.getElementById('results').classList.add('active');
+            }
+            
+            function drawGraph(data) {
+                const svg = d3.select('#graph');
+                svg.selectAll('*').remove();
+                
+                const width = svg.node().clientWidth;
+                const height = 500;
+                
+                // Create a group for pan/zoom
+                const g = svg.append('g');
+                
+                // Add grid background
+                const gridSize = 30;
+                const defs = svg.append('defs');
+                const pattern = defs.append('pattern')
+                    .attr('id', 'grid')
+                    .attr('width', gridSize)
+                    .attr('height', gridSize)
+                    .attr('patternUnits', 'userSpaceOnUse');
+                
+                pattern.append('path')
+                    .attr('d', `M ${gridSize} 0 L 0 0 0 ${gridSize}`)
+                    .attr('fill', 'none')
+                    .attr('stroke', '#f0f0f0')
+                    .attr('stroke-width', 1);
+                
+                // Add grid background
+                g.append('rect')
+                    .attr('width', width * 2)
+                    .attr('height', height * 2)
+                    .attr('fill', 'url(#grid)')
+                    .attr('class', 'graph-background');
+                
+                // Add zoom behavior
+                const zoom = d3.zoom()
+                    .on('zoom', (event) => {
+                        g.attr('transform', event.transform);
+                    });
+                
+                svg.call(zoom);
+                
+                // Add arrow markers for directed edges
+                defs.append('marker')
+                    .attr('id', 'arrowhead')
+                    .attr('markerWidth', 10)
+                    .attr('markerHeight', 10)
+                    .attr('refX', 36)
+                    .attr('refY', 5)
+                    .attr('orient', 'auto')
+                    .append('polygon')
+                    .attr('points', '0 0, 10 5, 0 10')
+                    .attr('fill', '#999');
+                
+                defs.append('marker')
+                    .attr('id', 'arrowhead-red')
+                    .attr('markerWidth', 10)
+                    .attr('markerHeight', 10)
+                    .attr('refX', 24)
+                    .attr('refY', 5)
+                    .attr('orient', 'auto')
+                    .append('polygon')
+                    .attr('points', '0 0, 10 5, 0 10')
+                    .attr('fill', '#ff6b6b');
+                
+                // Create simulation but with fixed forces (no dragging)
+                const simulation = d3.forceSimulation(data.nodes)
+                    .force('link', d3.forceLink(data.edges)
+                        .id(d => d.id)
+                        .distance(150))
+                    .force('charge', d3.forceManyBody().strength(-500))
+                    .force('center', d3.forceCenter(width / 2, height / 2))
+                    .force('collision', d3.forceCollide().radius(60))
+                    .alpha(1)
+                    .alphaDecay(0.02);
+                
+                // Run simulation to completion
+                let alpha = 1;
+                while (simulation.alpha() > 0.001) {
+                    simulation.tick();
+                }
+                
+                // Draw links/edges with arrows
+                const link = g.selectAll('line')
+                    .data(data.edges)
+                    .enter().append('line')
+                    .attr('x1', d => d.source.x)
+                    .attr('y1', d => d.source.y)
+                    .attr('x2', d => d.target.x)
+                    .attr('y2', d => d.target.y)
+                    .attr('stroke', d => {
+                        if (d.source.type === 'changed' || d.target.type === 'changed') {
+                            return '#ff6b6b';
+                        }
+                        return '#ccc';
+                    })
+                    .attr('stroke-width', d => {
+                        if (d.source.type === 'changed' || d.target.type === 'changed') {
+                            return 3;
+                        }
+                        return 2;
+                    })
+                    .attr('opacity', 0.6)
+                    .attr('marker-end', d => {
+                        if (d.source.type === 'changed' || d.target.type === 'changed') {
+                            return 'url(#arrowhead-red)';
+                        }
+                        return 'url(#arrowhead)';
+                    });
+                
+                // Draw nodes as rectangles (squares)
+                const labelPaddingX = 20, labelPaddingY = 12;
+                const labels = data.nodes.map(d => d.id.split('.').pop());
+                const labelWidths = labels.map(txt => Math.max(60, txt.length * 8)); // Approximate width
+
+                const node = g.selectAll('rect')
+                    .data(data.nodes)
+                    .enter().append('rect')
+                    .attr('x', (d, i) => d.x - labelWidths[i] / 2)
+                    .attr('y', d => d.y - 18)
+                    .attr('width', (d, i) => labelWidths[i])
+                    .attr('height', 36)
+                    .attr('rx', 4)
+                    .attr('fill', d => {
+                        if (d.type === 'changed') return '#ff6b6b';
+                        if (d.type === 'affected') return '#ffc93c';
+                        return '#667eea';
+                    })
+                    .attr('opacity', 0.85)
+                    .attr('stroke', 'white')
+                    .attr('stroke-width', 2)
+                    .on('mouseover', (event, d) => {
+                        showTooltip(event, d.id);
+                    })
+                    .on('mouseout', hideTooltip);
+                
+                // Draw labels inside rectangles
+                const label = g.selectAll('text')
+                    .data(data.nodes)
+                    .enter().append('text')
+                    .attr('x', d => d.x)
+                    .attr('y', d => d.y)
+                    .text((d) => d.id.split('.').pop())
+                    .attr('font-size', 16)
+                    .attr('font-weight', 'bold')
+                    .attr('text-anchor', 'middle')
+                    .attr('dy', '0.3em')
+                    .attr('pointer-events', 'none')
+                    .attr('fill', 'white');
+
+            }
+            
+            function showTooltip(event, text) {
+                const tooltip = document.getElementById('tooltip');
+                tooltip.textContent = text;
+                tooltip.classList.add('active');
+                tooltip.style.left = (event.pageX + 10) + 'px';
+                tooltip.style.top = (event.pageY + 10) + 'px';
+            }
+            
+            function hideTooltip() {
+                document.getElementById('tooltip').classList.remove('active');
+            }
+            
+            function showLoading(show) {
+                document.getElementById('loading').classList.toggle('active', show);
+            }
+            
+            function showError(msg) {
+                const error = document.getElementById('error');
+                error.textContent = msg;
+                error.classList.add('active');
+            }
+            
+            function clearError() {
+                document.getElementById('error').classList.remove('active');
+            }
+        </script>
+    </body>
+</html>
